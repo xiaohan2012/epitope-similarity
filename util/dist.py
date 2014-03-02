@@ -1,5 +1,5 @@
 import numpy as np
-from simscore.util.cache import BaseCache
+from cache import BaseCache
 
 def coord_dist(p1,p2):
     xyz1,xyz2 = np.array(p1),np.array(p2)
