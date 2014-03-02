@@ -3,6 +3,10 @@ epitope-similarity
 
 Epitope similarity calculation between two structures
 
+#Before you run
+
+`> pip install -r requirements.txt`
+	
 #How to use
 
 1. Without epitope specification: `python get_sim_score.py --query-pdb data/sample1.pdb  --against-pdb data/sample2.pdb`

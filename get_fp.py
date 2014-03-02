@@ -236,7 +236,7 @@ class Complex(object):
 if __name__ == "__main__":
     import sys
     
-    from PDB.PDBParser import PDBParser
+    from Bio.PDB.PDBParser import PDBParser
     p = PDBParser(PERMISSIVE=1)
     
     path = sys.argv[1]

@@ -2,9 +2,8 @@ from setting import *
 
 import unittest, os
 from get_fp import Complex
-from PDB.PDBParser import PDBParser
+from Bio.PDB.PDBParser import PDBParser
 from similarity import FPWithComplex, similarity_between
-
 
 class SimilarityTest (unittest.TestCase):
     def test_basic (self):
@@ -30,7 +29,7 @@ class SimilarityTest (unittest.TestCase):
     
         score1, score2, score3 = similarity_between (query, against)
         
-        expected = {"score1": 118.00269647021572, "score2": -8.0, "score3": 20.0}
+        expected = {"score1": 118.00269647021571, "score2": -8.0, "score3": 20.0}
         actual = {"score1": score1, "score2": score2, "score3": score3}
         
         self.assertEqual (actual, expected)
@@ -58,7 +57,7 @@ class SimilarityTest (unittest.TestCase):
     
         score1, score2, score3 = similarity_between (query, against)
         
-        expected = {'score1': 34.705754203703862, 'score2': 0, 'score3': 6}
+        expected = {'score1': 34.705754203703869, 'score2': 0, 'score3': 6}
         actual = {"score1": score1, "score2": score2, "score3": score3}
         
         self.assertEqual (actual, expected)
