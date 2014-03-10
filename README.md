@@ -5,7 +5,17 @@ Epitope similarity calculation between two structures
 
 #Before you run
 
-`> pip install -r requirements.txt`
+```
+> cd epitope-similarity
+> virtualenv venv
+> source venv/bin/activate
+> pip install -r requirements.txt
+```
+
+#Check if everything is ok
+
+`> python test/similarity_test.py`
+
 	
 #How to use
 
