@@ -8,7 +8,7 @@ def help ():
     print   """
     Usage:
 
-    Without epitope specification: python get_sim_score.py --query-pdb test/data/sample1.pdb  --against-pdb test/data/sample2.pdb 
+    Without any specification: python get_sim_score.py --query-pdb test/data/sample1.pdb  --against-pdb test/data/sample2.pdb 
     
     With specification: python get_sim_score.py --query-pdb test/data/sample1.pdb  --query-epitope 211,213,214,224,225,226,227,228,229 --against-pdb test/data/sample2.pdb --against-epitope 216,217,218,219,220,221
 

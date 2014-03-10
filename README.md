@@ -19,7 +19,12 @@ Epitope similarity calculation between two structures
 	
 #How to use
 
-1. Without epitope specification: `python get_sim_score.py --query-pdb data/sample1.pdb  --against-pdb data/sample2.pdb`
-2. With epitope specification: `python get_sim_score.py --query-pdb data/sample1.pdb  --query-epitope 211,213,214,224,225,226,227,228,229 --against-pdb data/sample2.pdb --against-epitope 216,217,218,219,220,221`
-3. With spinimage parameter specification: `python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb  --spin-image-radius-step=2 --spin-image-height-step=5 --sphere-radius-step=2`
-4. With the similarity calculation cutoff specified: `python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb --cutoff=5`
+1. Without any specification: `python get_sim_score.py --query-pdb test/data/sample1.pdb  --against-pdb test/data/sample2.pdb`
+2. With epitope specification: `python get_sim_score.py --query-pdb test/data/sample1.pdb  --query-epitope 211,213,214,224,225,226,227,228,229 --against-pdb test/data/sample2.pdb --against-epitope 216,217,218,219,220,221`
+3. With spinimage parametrization: `python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb  --spin-image-radius-step=2 --spin-image-height-step=5 --sphere-radius-step=2`
+4. With cutoff parametrization: `python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb  --cutoff=10`
+
+You can specify the fingerprint path and skip the fp calcualtion step by using the option --query-fp and --against_fp, for example: 
+
+`python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb --query-fp=fp/h2-v2/sample1.pdb.fp --against-fp=fp/h2-v2/sample2.pdb.fp`
+
