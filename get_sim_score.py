@@ -27,10 +27,11 @@ if __name__ == "__main__":
 
     #and make them into the right data type
     spin_image_radius_range = (0, 20)
-    spin_image_radius_step = 2
     spin_image_height_range =  (-30, 10)
-    spin_image_height_step = 5
     sphere_radius_range = (0, 20)
+    
+    spin_image_height_step = 5
+    spin_image_radius_step = 2
     sphere_radius_step = 2
 
     cutoff = 20.0

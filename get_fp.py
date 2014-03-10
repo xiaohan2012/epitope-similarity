@@ -255,11 +255,21 @@ if __name__ == "__main__":
     from Bio.PDB.PDBParser import PDBParser
     p = PDBParser(PERMISSIVE=1)
     
-    path = sys.argv[1]
-    epitope = [] if len(sys.argv) == 2 else map(int, sys.argv[2].split (','))
-
+    try:
+        path = sys.argv[1]
+        horizontal = int(sys.argv[2])
+        vertical = int(sys.argv[3])
+        
+        epitope = [] if len(sys.argv) == 4 else map(int, sys.argv[-1].split (','))
+    except:
+        print "Expecting format like: \n\tpython get_fp.py path/to/pdb/file horizontal-step  vertical-step [a list of epitope residue numbers]"
+        print 'For example: \n\tpython get_fp.py test/data/sample1.pdb  5 4 211,213,214,224,225,226,227,228,229'
+        sys.exit (-1)
+        
     struct = p.get_structure(os.path.basename (path), path)
-    c = Complex (struct, epitope);
+    c = Complex (struct, epitope)
     
-    c.get_fp ()
+    c.get_fp (spin_image_radius_step = horizontal,
+              spin_image_height_step = vertical)
+    
     print c.fp2str ()
