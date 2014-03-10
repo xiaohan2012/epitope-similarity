@@ -141,19 +141,7 @@ class dist_mat(UserDict):
                         tpl [0] not in self.clustered_fp1_res and 
                         tpl [1] not in self.clustered_fp2_res,
                         all_pairs)  #filter out those in the not_suitable list
-        
-        # sim_tuple = None
-        # max_sim = 0
-        # for res1,_ in self.data.items():
-        #     for res2,dist in _.items():
-        #         if dist > max_sim and \
-        #            res1 not in self.clustered_fp1_res and \
-        #            res2 not in self.clustered_fp2_res and \
-        #            (res1,res2,dist) not in self.not_suitable_tuple:
-
-        #             max_sim = dist
-        #             sim_tuple  = (res1,res2,dist)
-        
+                
         if len (tuples) == 0:
             return None
         else:

@@ -186,22 +186,20 @@ class Complex(object):
         """
         #radius part
         spin_image_radius_min , spin_image_radius_max = spin_image_radius_range
-        spin_image_radius_step = spin_image_radius_step
         spin_image_radius_seg_cnt = ( spin_image_radius_max - spin_image_radius_min ) / spin_image_radius_step
-        spin_image_radius_ind_min , spin_image_radius_ind_max = spin_image_radius_min / spin_image_radius_step, spin_image_radius_max / spin_image_radius_step - 1
+        spin_image_radius_ind_min , spin_image_radius_ind_max = int(spin_image_radius_min / spin_image_radius_step), int(spin_image_radius_max / spin_image_radius_step - 1) #index min and max must be integer. Maybe some warning should be put here.
 
         #height part
         spin_image_height_min , spin_image_height_max = spin_image_height_range
-        spin_image_height_step = spin_image_height_step
         spin_image_height_seg_cnt = ( spin_image_height_max - spin_image_height_min ) / spin_image_height_step
-        spin_image_height_ind_min , spin_image_height_ind_max = spin_image_height_min / spin_image_height_step, spin_image_height_max / spin_image_height_step - 1
+        spin_image_height_ind_min , spin_image_height_ind_max = int(spin_image_height_min / spin_image_height_step), int(spin_image_height_max / spin_image_height_step - 1) #index min and max must be integer. Maybe some warning should be put here.
 
         #sphere part
         dist_min, dist_max = sphere_radius_range
         dist_step = sphere_radius_step
         
-        dist_ind_min = dist_min / dist_step
-        dist_ind_max = dist_max / dist_step - 1
+        dist_ind_min, dist_ind_max =  int(dist_min / dist_step), int(dist_max / dist_step - 1)#index min and max must be integer. Maybe some warning should be put here.
+        
         
         self.res_list = []
         

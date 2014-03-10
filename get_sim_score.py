@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 
 from similarity import FPWithComplex, similarity_between
@@ -6,11 +8,11 @@ def help ():
     print   """
     Usage:
 
-    Without epitope specification: python get_sim_score.py --query-pdb data/sample1.pdb  --against-pdb data/sample2.pdb 
+    Without epitope specification: python get_sim_score.py --query-pdb test/data/sample1.pdb  --against-pdb test/data/sample2.pdb 
     
-    With specification: python get_sim_score.py --query-pdb data/sample1.pdb  --query-epitope 211,213,214,224,225,226,227,228,229 --against-pdb data/sample2.pdb --against-epitope 216,217,218,219,220,221
+    With specification: python get_sim_score.py --query-pdb test/data/sample1.pdb  --query-epitope 211,213,214,224,225,226,227,228,229 --against-pdb test/data/sample2.pdb --against-epitope 216,217,218,219,220,221
 
-    With spinimage configuration: python get_sim_score.py --query-pdb data/sample1.pdb  --against-pdb data/sample2.pdb  --spin-image-radius-range=20,40 --spin-image-radius-step=2 --spin-image-height-range=10,60 --spin-image-height-step=5 --sphere-radius-range=20,40 --sphere-radius-step=2
+    With spinimage configuration: python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb --spin-image-radius-range=-10,10 --spin-image-radius-step=2 --spin-image-height-range=-20,20 --spin-image-height-step=5 --sphere-radius-range=-20,0 --sphere-radius-step=2
     """
 
 if __name__ == "__main__":
@@ -61,7 +63,7 @@ if __name__ == "__main__":
 
     #calculate the finger print
     from get_fp import Complex
-    from PDB.PDBParser import PDBParser
+    from Bio.PDB.PDBParser import PDBParser
     p = PDBParser(PERMISSIVE=1)
 
     query_struct = p.get_structure(os.path.basename (query_pdb_path), query_pdb_path)
@@ -80,11 +82,12 @@ if __name__ == "__main__":
     against = FPWithComplex (against_complex, against_fp_string)
     
     score1, score2, score3 = similarity_between (query, against)
+    z1, z2, z3 = similarity_between (query, query) #the normalization constant
     
     result = {
-        'score1': score1, 
-        'score2': score2, 
-        'score3': score3
+        'score1': score1 / z1, 
+        'score2': score2 / z2, 
+        'score3': score3 / z3
     }
 
     from simplejson import dumps
