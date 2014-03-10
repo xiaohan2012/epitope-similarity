@@ -12,7 +12,7 @@ def help ():
     
     With specification: python get_sim_score.py --query-pdb test/data/sample1.pdb  --query-epitope 211,213,214,224,225,226,227,228,229 --against-pdb test/data/sample2.pdb --against-epitope 216,217,218,219,220,221
 
-    With spinimage configuration: python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb --spin-image-radius-range=-10,10 --spin-image-radius-step=2 --spin-image-height-range=-20,20 --spin-image-height-step=5 --sphere-radius-range=-20,0 --sphere-radius-step=2
+    With spinimage configuration: python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb  --spin-image-radius-step=2 --spin-image-height-step=5 --sphere-radius-step=2
     """
 
 if __name__ == "__main__":
@@ -38,16 +38,10 @@ if __name__ == "__main__":
 
     while len(optlist) > 0:
         opt, val = optlist.pop ()
-        if opt == '--spin-image-radius-range':
-            spin_image_radius_range = map (float,  val.split (','))
-        elif opt == '--spin-image-radius-step':
+        if opt == '--spin-image-radius-step':
             spin_image_radius_step = float (val)
-        elif opt == '--spin-image-height-range':
-            spin_image_height_range = map (float,  val.split (','))
         elif opt == '--spin-image-height-step':
             spin_image_height_step = float (val)
-        elif opt == '--sphere-radius-range':
-            sphere_radius_range = map (float,  val.split (','))
         elif opt == '--sphere-radius-step':
             sphere_radius_step = float (val)
         elif opt == '--query-pdb':
@@ -72,8 +66,8 @@ if __name__ == "__main__":
     query_complex = Complex (query_struct, query_epitope)
     against_complex = Complex (against_struct, against_epitope)
     
-    query_complex.get_fp(spin_image_radius_range, spin_image_radius_step, spin_image_height_range, spin_image_height_step, sphere_radius_range, sphere_radius_step)
-    against_complex.get_fp(spin_image_radius_range, spin_image_radius_step, spin_image_height_range, spin_image_height_step, sphere_radius_range, sphere_radius_step)
+    query_complex.get_fp(spin_image_radius_step = spin_image_radius_step, spin_image_height_step = spin_image_height_step, sphere_radius_step = sphere_radius_step)
+    against_complex.get_fp(spin_image_radius_step = spin_image_radius_step, spin_image_height_step = spin_image_height_step, sphere_radius_step = sphere_radius_step)
     
     query_fp_string = query_complex.fp2str ()
     against_fp_string = against_complex.fp2str ()

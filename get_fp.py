@@ -26,7 +26,7 @@ class Residue(object):
     def __init__(self, res, comp):
 
         self.c = comp
-        self.fp = [0] * 110
+        self.fp = None #to be assigned later
         self.ca = None
         self.body = res
         self.resnum = res.get_id ()
@@ -49,6 +49,18 @@ class Residue(object):
         """
         return self.body.get_list ()
 
+    def get_resname_abbrev (self):
+        """
+        get the abbreviation code of residue name
+        """
+        return Residue.abbrev_mapping[self.body.get_resname()]
+
+    def set_fp_length (self, length):
+        """
+        set the length of the fingerprint
+        """
+        self.fp = [0] * length
+        
     def is_valid (self):
         """
         if the residue is valid (contain CA atom or not)
@@ -69,18 +81,13 @@ class Residue(object):
             if res.ca == self.ca:continue
             yield res
 
-    def get_resname_abbrev (self):
-        """
-        get the abbreviation code of residue name
-        """
-        return Residue.abbrev_mapping[self.body.get_resname()]
-
     def get_struct_fp(self, spin_image_radius_step, spin_image_height_step, 
                       spin_image_radius_ind_min, spin_image_radius_ind_max, 
                       spin_image_height_ind_min, spin_image_height_ind_max,
-                      spin_image_radius_seg_cnt, spin_image_height_seg_cnt):
+                      spin_image_radius_seg_cnt, spin_image_height_seg_cntm,
+                      offset = 0):
         """
-        get the structural based fingerprints
+        get the structural based fingerprints, given a set of spinimage parameters and the fingerprint bit starting position
         """
         def get_region_number(res_ca):
             """
@@ -117,11 +124,11 @@ class Residue(object):
                 d_[num] += 1
         
         for bit_num,count in d_.iteritems():
-            self.turn_on_bit(bit_num,count)
+            self.turn_on_bit(offset + bit_num, count)
 
         return self.fp           
     
-    def get_surrounding_fp(self, dist_step, dist_ind_min, dist_ind_max):
+    def get_surrounding_fp(self, dist_step, dist_ind_min, dist_ind_max, offset = 0):
         """
         get the surrouding-residue based fingerprints
         """
@@ -135,7 +142,9 @@ class Residue(object):
                 #within range
                 d_[dist_ind].append(other)
         
-        for i in xrange(dist_ind_max - dist_ind_min + 1):
+        slice_count = dist_ind_max - dist_ind_min #how many slices for the sphere
+        
+        for i in xrange(slice_count + 1):
             # for layer i
             h_bond, charged , hydro = 0 , 0 , 0
             for res in d_[i]:
@@ -146,9 +155,9 @@ class Residue(object):
                 h_bond += Residue.h_bond_dict[code]
             
             #fp for layer i,in the 3 aspects
-            self.turn_on_bit(80 + i , hydro)
-            self.turn_on_bit(90 + i , charged)
-            self.turn_on_bit(100 + i , h_bond)
+            self.turn_on_bit(offset + i , hydro)
+            self.turn_on_bit(offset + slice_count + i , charged)
+            self.turn_on_bit(offset + slice_count*2 + i , h_bond)
 
     def __repr__(self):            
         return "ca atom index:%d" %(self.ca.index)
@@ -175,11 +184,12 @@ class Complex(object):
     def get_residues (self):
         return self.residues
         
-    def get_fp(self, spin_image_radius_range = (0, 20),
-               spin_image_radius_step = 2,
+    def get_fp(self, 
+               spin_image_radius_range = (0, 20),
                spin_image_height_range =  (-30, 10),
-               spin_image_height_step = 5,
                sphere_radius_range = (0, 20),
+               spin_image_radius_step = 2,               
+               spin_image_height_step = 5,
                sphere_radius_step = 2):
         """
         get the 110-bit fingerprint
@@ -194,26 +204,34 @@ class Complex(object):
         spin_image_height_seg_cnt = ( spin_image_height_max - spin_image_height_min ) / spin_image_height_step
         spin_image_height_ind_min , spin_image_height_ind_max = int(spin_image_height_min / spin_image_height_step), int(spin_image_height_max / spin_image_height_step - 1) #index min and max must be integer. Maybe some warning should be put here.
 
+        cylinder_slice_count = (spin_image_height_ind_max - spin_image_height_ind_min + 1) * (spin_image_radius_ind_max - spin_image_radius_ind_min + 1)
+        
         #sphere part
         dist_min, dist_max = sphere_radius_range
         dist_step = sphere_radius_step
         
         dist_ind_min, dist_ind_max =  int(dist_min / dist_step), int(dist_max / dist_step - 1)#index min and max must be integer. Maybe some warning should be put here.
         
+        sphere_slice_count = dist_ind_max - dist_ind_min + 1
         
+        fp_size = cylinder_slice_count + sphere_slice_count * 3
         self.res_list = []
         
         for i , res in enumerate(self.residues):
+            
+            res.set_fp_length (fp_size)#initialize the fingerprint
+            
             #print "residue %d" %i
-            res.get_surrounding_fp(dist_step, dist_ind_min, dist_ind_max)
+            res.get_surrounding_fp(dist_step, dist_ind_min, dist_ind_max, offset = cylinder_slice_count)
             
             res.get_struct_fp(spin_image_radius_step, spin_image_height_step, 
-                      spin_image_radius_ind_min, spin_image_radius_ind_max, 
-                      spin_image_height_ind_min, spin_image_height_ind_max,
-                      spin_image_radius_seg_cnt, spin_image_height_seg_cnt)
+                              spin_image_radius_ind_min, spin_image_radius_ind_max, 
+                              spin_image_height_ind_min, spin_image_height_ind_max,
+                              spin_image_radius_seg_cnt, spin_image_height_seg_cnt)
             
             #print res.fp,len(res.fp)
             self.res_list.append(res)
+        
         return self.res_list
     
     def fp2str (self):
