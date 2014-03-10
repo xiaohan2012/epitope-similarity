@@ -33,7 +33,7 @@ if __name__ == "__main__":
     sphere_radius_range = (0, 20)
     sphere_radius_step = 2
 
-    cutoff = 
+    cutoff = 20.0
     
     query_epitope = []
     against_epitope = []
@@ -79,9 +79,9 @@ if __name__ == "__main__":
     query = FPWithComplex (query_complex, query_fp_string)
     against = FPWithComplex (against_complex, against_fp_string)
     
-    score1, score2, score3 = similarity_between (query, against)
-    z1, z2, z3 = similarity_between (query, query) #the normalization constant
-    
+    score1, score2, score3 = similarity_between (query, against, cutoff = cutoff)
+    z1, z2, z3 = similarity_between (query, query, cutoff = cutoff) #the normalization constant
+    print score1, score2, score3
     result = {
         'score1': score1 / z1, 
         'score2': score2 / z2, 
