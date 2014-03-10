@@ -38,7 +38,7 @@ class residue_fp(object):
         """
         return corrcoef(vstack((self.fp_str,residue_fp1.fp_str)))[0,1]
 
-    def within_range_of(self, o_res, range_dist = 20):
+    def within_range_of(self, o_res, range_dist):
         """
         determine if the residue is within distance `range_dist` of the `o_res`
 
@@ -147,54 +147,56 @@ class dist_mat(UserDict):
         else:
             return max (tuples, key = lambda (_,__,num): num)
 
-    def find_cluster_helper(self):
-        """
-        Perform one round of residue cluster discovery and add the discoverd cluster to the class variable
-        
-        steps: 
-        1. find the closest pair as the cluster base
-        2. use the base to find within-range pairs in a greedy-manner, always consider those pairs whose are more similar with each other
-        """
-        
-        cluster = set()
-        
-        self.not_suitable_tuple = set()
-        
-        self.extending_tuple = self.find_closest_tuple() #we can the closest residue as the expansion point
-        
-        if self.extending_tuple is None: #if no more, it's done
-            return
 
-        cluster.add(self.extending_tuple); ext_res1 , ext_res2 , dist = self.extending_tuple #add the first tuple to the cluster and unpack it
-        
-        self.clustered_fp1_res.add(ext_res1); self.clustered_fp2_res.add(ext_res2)#add residues to corresponding sides
-        
-        center_res1, center_res2 = self.fp1[ext_res1].res, self.fp2[ext_res2].res #get the expansion residues
-        
-        while True:
-            t = self.find_closest_tuple() #get the next closest(edit distance) tuple
-            if t is None:#cannot find any appropriate tuple, quit
-                break
+    def find_clusters(self, cutoff):
+        def helper():
+            """
+            Perform one round of residue cluster discovery and add the discoverd cluster to the class variable
             
-            res1 , res2 , dist = t
-            if self.fp1[res1].within_range_of(center_res1) and self.fp2[res2].within_range_of(center_res2):
-                #check if it is within the range of extending tuple,if so, add it to the cluster
-                cluster.add(t)
+            steps: 
+            1. find the closest pair as the cluster base
+            2. use the base to find within-range pairs in a greedy-manner, always consider those pairs whose are more similar with each other
+            """
+            
+            cluster = set()
+            
+            self.not_suitable_tuple = set()
+            
+            self.extending_tuple = self.find_closest_tuple() #we can the closest residue as the expansion point
+            
+            if self.extending_tuple is None: #if no more, it's done
+                return
 
-                self.clustered_fp1_res.add(res1)
-                self.clustered_fp2_res.add(res2)
-                #print "cluster size: %d,total residue number: f1 = %d, f2 = %d" %(len(cluster),len(self.fp1),len(self.fp2))
-            else:
-                #print "out of range"
-                self.not_suitable_tuple.add(t)
-                            
-        self.clusters.append(cluster)
-        self.extending_tuple = None
-        
-        return cluster
+            cluster.add(self.extending_tuple); ext_res1 , ext_res2 , dist = self.extending_tuple #add the first tuple to the cluster and unpack it
+            
+            self.clustered_fp1_res.add(ext_res1); self.clustered_fp2_res.add(ext_res2)#add residues to corresponding sides
+            
+            center_res1, center_res2 = self.fp1[ext_res1].res, self.fp2[ext_res2].res #get the expansion residues
+            
+            while True:
+                t = self.find_closest_tuple() #get the next closest(edit distance) tuple
+                if t is None:#cannot find any appropriate tuple, quit
+                    break
+                
+                res1 , res2 , dist = t
+                if self.fp1[res1].within_range_of(center_res1, cutoff) and self.fp2[res2].within_range_of(center_res2, cutoff):
+                    #check if it is within the range of extending tuple,if so, add it to the cluster
+                    cluster.add(t)
 
-    def find_clusters(self):
-        while self.find_cluster_helper():pass
+                    self.clustered_fp1_res.add(res1)
+                    self.clustered_fp2_res.add(res2)
+                    #print "cluster size: %d,total residue number: f1 = %d, f2 = %d" %(len(cluster),len(self.fp1),len(self.fp2))
+                else:
+                    #print "out of range"
+                    self.not_suitable_tuple.add(t)
+                                
+            self.clusters.append(cluster)
+            self.extending_tuple = None
+            
+            return cluster
+
+        while helper():
+            pass
         return self.clusters
         
 res_sim_mat = {"AA" : 1,"AC" : 0,"AD" : 0,"AE" : 0,"AF" : 0,"AG" : 0,"AH" : 0,"AI" : 0,"AK" : 0,"AL" : 0,"AM" : 0,"AN" : -2,"AP" : -1,"AQ" : -1,"AR" : -1,"AS" : 1,"AT" : 0,"AV" : 0,"AW" : -3,"AY" : -2,"CC" : 9,"CD" : -3,"CE" : -4,"CF" : -2,"CG" : -3,"CH" : -3,"CI" : -1,"CK" : -3,"CL" : -1,"CM" : -1,"CN" : -3,"CP" : -3,"CQ" : -3,"CR" : -3,"CS" : -1,"CT" : -1,"CV" : -1,"CW" : -2,"CY" : -2,"DD" : 6,"DE" : 2,"DF" : -3,"DG" : -1,"DH" : -1,"DI" : -3,"DK" : -1,"DL" : -4,"DM" : -3,"DN" : 1,"DP" : -1,"DQ" : 0,"DR" : -2,"DS" : 0,"DT" : -1,"DV" : -3,"DW" : -4,"DY" : -3,"EE" : 5,"EF" : -3,"EG" : -2,"EH" : 0,"EI" : -3,"EK" : 1,"EL" : -3,"EM" : -2,"EN" : 0,"EP" : -1,"EQ" : 2,"ER" : 0,"ES" : 0,"ET" : -1,"EV" : -2,"EW" : -3,"EY" : -2,"FF" : 6,"FG" : -3,"FH" : -1,"FI" : 0,"FK" : -3,"FL" : 0,"FM" : 0,"FN" : -3,"FP" : -4,"FQ" : -3,"FR" : -3,"FS" : -2,"FT" : -2,"FV" : -1,"FW" : 1,"FY" : 3,"GG" : 6,"GH" : -2,"GI" : -4,"GK" : -2,"GL" : -4,"GM" : -3,"GN" : 0,"GP" : -2,"GQ" : -2,"GR" : -2,"GS" : 0,"GT" : -2,"GV" : -3,"GW" : -2,"GY" : -3,"HH" : 8,"HI" : -3,"HK" : -1,"HL" : -3,"HM" : -2,"HN" : 1,"HP" : -2,"HQ" : 0,"HR" : 0,"HS" : -1,"HT" : -2,"HV" : -3,"HW" : -2,"HY" : 2,"II" : 4,"IK" : -3,"IL" : 2,"IM" : 1,"IN" : -3,"IP" : -3,"IQ" : -3,"IR" : -3,"IS" : -2,"IT" : -1,"IV" : 3,"IW" : -3,"IY" : -1,"KK" : 5,"KL" : -2,"KM" : -1,"KN" : 0,"KP" : -1,"KQ" : 1,"KR" : 2,"KS" : 0,"KT" : -1,"KV" : -2,"KW" : -3,"KY" : -2,"LL" : 4,"LM" : 2,"LN" : -3,"LP" : -3,"LQ" : -2,"LR" : -2,"LS" : -2,"LT" : -1,"LV" : 1,"LW" : -2,"LY" : -1,"MM" : 5,"MN" : -2,"MP" : -2,"MQ" : 0,"MR" : -1,"MS" : -1,"MT" : -1,"MV" : 1,"MW" : -1,"MY" : -1,"NN" : 6,"NP" : -2,"NQ" : 0,"NR" : 0,"NS" : 1,"NT" : 0,"NV" : -3,"NW" : -4,"NY" : -2,"PP" : 7,"PQ" : -1,"PR" : -2,"PS" : -1,"PT" : -1,"PV" : -2,"PW" : -4,"PY" : -3,"QQ" : 5,"QR" : 1,"QS" : 0,"QT" : -1,"QV" : -2,"QW" : -2,"QY" : -1,"RR" : 5,"RS" : -1,"RT" : -1,"RV" : -3,"RW" : -3,"RY" : -2,"SS" : 4,"ST" : 1,"SV" : -2,"SW" : -3,"SY" : -2,"TT" : 5,"TV" : 0,"TW" : -2,"TY" : -2,"VV" : 4,"VW" : -3,"VY" : -1,"WW" : 11,"WY" : 2,"YY" : 7}
@@ -212,7 +214,7 @@ class FPWithComplex(object):
         self.complex = complex #reads the structure
         self.fp = residue_fp_list(fp_string, complex) #instantiates the fp list
     
-def similarity_between(c1,c2):
+def similarity_between(c1,c2, cutoff = 20):
     """
     Parameter: 
     c1: complex fingerprint 1
@@ -225,8 +227,7 @@ def similarity_between(c1,c2):
     pair = dist_mat(c1,c2)
     
     #print "finding clusters"
-    clusters = pair.find_clusters()
-    
+    clusters = pair.find_clusters(cutoff)
     
     #val1, val2 and val3 starts
     val1,val2,val3 = 0, 0, 0

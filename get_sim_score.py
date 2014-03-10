@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     try:
         #parse the cmd argument
-        optlist, args = getopt.getopt (sys.argv[1:], "", ['query-pdb=', 'against-pdb=', 'query-epitope=', 'against-epitope=', 'spin-image-radius-range=', 'spin-image-radius-step=', 'spin-image-height-range=', 'spin-image-height-step=', 'sphere-radius-range=', 'sphere-radius-step=',])
+        optlist, args = getopt.getopt (sys.argv[1:], "", ['query-pdb=', 'against-pdb=', 'query-epitope=', 'against-epitope=', 'spin-image-radius-step=', 'spin-image-height-step=', 'sphere-radius-step=', 'cutoff='])
     except:
         help ()
         sys.exit (-1)
@@ -33,6 +33,8 @@ if __name__ == "__main__":
     sphere_radius_range = (0, 20)
     sphere_radius_step = 2
 
+    cutoff = 
+    
     query_epitope = []
     against_epitope = []
 
@@ -44,6 +46,8 @@ if __name__ == "__main__":
             spin_image_height_step = float (val)
         elif opt == '--sphere-radius-step':
             sphere_radius_step = float (val)
+        elif opt == '--cutoff':
+            cutoff = float (val)
         elif opt == '--query-pdb':
             query_pdb_path = val
         elif opt == '--against-pdb':
