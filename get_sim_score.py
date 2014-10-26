@@ -4,6 +4,10 @@ import os
 
 from similarity import FPWithComplex, similarity_between
 
+#calculate the finger print
+from get_fp import Complex
+from Bio.PDB.PDBParser import PDBParser
+
 def help ():
     print   """
     Usage:
@@ -19,6 +23,57 @@ def help ():
     python get_sim_score.py --query-pdb test/data/sample1.pdb --against-pdb test/data/sample2.pdb --query-fp=fp/h2-v2/sample1.pdb.fp --against-fp=fp/h2-v2/sample2.pdb.fp
     """
 
+def write_score_to_file (scores, pdb1_id, pdb2_id, score_file):
+    with open (score_file, "a") as f:
+        s1,s2,s3 = scores
+        f.write ("%s,%s,%f,%f,%f\n" %(pdb1_id, pdb2_id, s1, s2, s3))
+        
+def score (query_pdb_path,
+           against_pdb_path,
+           query_fp_path = None,
+           against_fp_path = None,
+           query_epitope = [],
+           against_epitope = [],
+           spin_image_height_step = 5,
+           spin_image_radius_step = 2,
+           sphere_radius_step = 2,
+           cutoff = 20.0,
+           spin_image_radius_range = (0, 20),
+           spin_image_height_range =  (-30, 10),
+           sphere_radius_range = (0, 20),
+           callback = write_score_to_file, cbargs=[]):
+
+    p = PDBParser(PERMISSIVE=1)
+
+    query_struct = p.get_structure(os.path.basename (query_pdb_path), query_pdb_path)
+    against_struct = p.get_structure(os.path.basename (against_pdb_path), against_pdb_path)
+
+    query_complex = Complex (query_struct, query_epitope)
+    against_complex = Complex (against_struct, against_epitope)
+    
+    if query_fp_path is None or  against_fp_path is None:#if fp is not given
+        query_complex.get_fp(spin_image_radius_step = spin_image_radius_step, spin_image_height_step = spin_image_height_step, sphere_radius_step = sphere_radius_step)
+        against_complex.get_fp(spin_image_radius_step = spin_image_radius_step, spin_image_height_step = spin_image_height_step, sphere_radius_step = sphere_radius_step)
+        
+        query_fp_string = query_complex.fp2str ()
+        against_fp_string = against_complex.fp2str ()
+    else:
+        #if fp is given, read them
+        with open (query_fp_path, 'r') as f1, open(against_fp_path, 'r') as f2:
+            query_fp_string = f1.read ()
+            against_fp_string = f2.read ()
+        
+    query = FPWithComplex (query_complex, query_fp_string)
+    against = FPWithComplex (against_complex, against_fp_string)
+    
+    score1, score2, score3 = similarity_between (query, against, cutoff = cutoff)
+    #z1, z2, z3 = similarity_between (query, query, cutoff = cutoff) #the normalization constant
+    #print score1, score2, score3
+
+    if callback is not None:
+        callback ((score1, score2, score3), *cbargs)
+    return score1, score2, score3
+    
 if __name__ == "__main__":
     import sys, getopt
 
@@ -70,33 +125,7 @@ if __name__ == "__main__":
         else:
             raise Exception ("Invalid option")
 
-    #calculate the finger print
-    from get_fp import Complex
-    from Bio.PDB.PDBParser import PDBParser
-    p = PDBParser(PERMISSIVE=1)
-
-    query_struct = p.get_structure(os.path.basename (query_pdb_path), query_pdb_path)
-    against_struct = p.get_structure(os.path.basename (against_pdb_path), against_pdb_path)
-
-    query_complex = Complex (query_struct, query_epitope)
-    against_complex = Complex (against_struct, against_epitope)
-    
-    if query_fp_path is None or  against_fp_path is None:#if fp is not given
-        query_complex.get_fp(spin_image_radius_step = spin_image_radius_step, spin_image_height_step = spin_image_height_step, sphere_radius_step = sphere_radius_step)
-        against_complex.get_fp(spin_image_radius_step = spin_image_radius_step, spin_image_height_step = spin_image_height_step, sphere_radius_step = sphere_radius_step)
-        
-        query_fp_string = query_complex.fp2str ()
-        against_fp_string = against_complex.fp2str ()
-    else:
-        #if fp is given, read them
-        with open (query_fp_path, 'r') as f1, open(against_fp_path, 'r') as f2:
-            query_fp_string = f1.read ()
-            against_fp_string = f2.read ()
-        
-    query = FPWithComplex (query_complex, query_fp_string)
-    against = FPWithComplex (against_complex, against_fp_string)
-    
-    score1, score2, score3 = similarity_between (query, against, cutoff = cutoff)
-    #z1, z2, z3 = similarity_between (query, query, cutoff = cutoff) #the normalization constant
-    #print score1, score2, score3
-    print score1, score2, score3
+    print score ("test/data/sample1.pdb", "test/data/sample2.pdb", "fp/h2-v2/sample1.pdb.fp", "fp/h2-v2/sample2.pdb.fp", 
+                 spin_image_height_step = 5,
+                 spin_image_radius_step = 2,
+                 cutoff = 20.0)

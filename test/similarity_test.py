@@ -32,8 +32,8 @@ class SimilarityTest (unittest.TestCase):
     
         score1, score2, score3 = similarity_between (query, against)
         
-        expected = {"score1": 118.00269647021572, "score2": -8.0, "score3": 20.0}
-        actual = {"score1": score1, "score2": score2, "score3": score3}
+        expected = {"score1": 118.00269647021572, "score3": 20, "score2": -8}
+        actual = {"score1": score1, "score3": score2, "score2": score3}
         
         self.assertEqual (actual, expected)
 
@@ -63,7 +63,7 @@ class SimilarityTest (unittest.TestCase):
     
         score1, score2, score3 = similarity_between (query, against)
         
-        expected = {'score1': 34.705754203703862, 'score2': 0, 'score3': 6}
+        expected = {'score1': 34.705754203703862, 'score3': 0, 'score2': 6}
         actual = {"score1": score1, "score2": score2, "score3": score3}
         
         self.assertEqual (actual, expected)
@@ -94,7 +94,7 @@ class SimilarityTest (unittest.TestCase):
     
         score1, score2, score3 = similarity_between (query, against)
         
-        expected = {'score1': 129.68169758476202, 'score2': 5, 'score3': 20}
+        expected = {'score1': 129.68169758476202, 'score3': 5, 'score2': 20}
         actual = {"score1": score1, "score2": score2, "score3": score3}
         
         self.assertEqual (actual, expected)
@@ -125,7 +125,7 @@ class SimilarityTest (unittest.TestCase):
     
         score1, score2, score3 = similarity_between (query, against)
         
-        expected = {'score1': 35.771598481467343, 'score2': 2, 'score3': 6}
+        expected = {'score1': 35.771598481467343, 'score3': 2, 'score2': 6}
         actual = {"score1": score1, "score2": score2, "score3": score3}
         
         self.assertEqual (actual, expected)
@@ -156,7 +156,7 @@ class SimilarityTest (unittest.TestCase):
     
         score1, score2, score3 = similarity_between (query, against, cutoff = 5)
         
-        expected = {"score1": 119.75339423551459, "score2": -8, "score3": 20}
+        expected = {"score1": 119.75339423551459, "score3": -8, "score2": 20}
         actual = {"score1": score1, "score2": score2, "score3": score3}
         
         self.assertEqual (actual, expected)

@@ -27,6 +27,10 @@ def _fill(matrix, extra_ordinary = [], extra_special = []):
         3.0
         >>> newdata["C"]["C"]
         2.5
+        >>> newdata["C"]["X"]
+        2.5
+        >>> newdata["X"]["C"]
+        2.5
     """
     matrix_copy = deepcopy(matrix)
     original_keys = matrix_copy.keys()
@@ -40,10 +44,9 @@ def _fill(matrix, extra_ordinary = [], extra_special = []):
         if not row_names:
             row_names = mat.keys()
 
-        return sum([mat[row_name][col_name] 
+        return float(sum([mat[row_name][col_name] 
                     for col_name in col_names
-                    for row_name in row_names]) / len(col_names) / len(row_names)
-
+                    for row_name in row_names])) / len(col_names) / len(row_names)
         
     for extra_key in extra_ordinary:
         for key in  original_keys:
@@ -55,12 +58,18 @@ def _fill(matrix, extra_ordinary = [], extra_special = []):
     for extra_key, fields in extra_special:
         for key in  original_keys:
             matrix[extra_key][key] = block_avg(matrix_copy, 
-                                               row_names = fields, col_names = key)
+                                               row_names = fields, col_names = [key])
             matrix[key][extra_key] = block_avg(matrix_copy, 
-                                               row_names = key, col_names = fields)
+                                               row_names = [key], col_names = fields)
 
         matrix[extra_key][extra_key] = block_avg(matrix_copy, fields, fields)
 
+    # extra ordinary key VS extra special key
+    for ordinary_key in extra_ordinary:
+        for special_key, fields in extra_special:
+            matrix[ordinary_key][special_key] = block_avg(matrix_copy, col_names = fields)
+            matrix[special_key][ordinary_key] = block_avg(matrix_copy, row_names = fields)
+            
     return matrix
     
     
@@ -77,11 +86,14 @@ def load_similarity_maitrx(path):
     -2.0
     >>> m["A"]["B"]
     -1.5
+    >>> m["X"]["B"]
+    -1.0
+    >>> m["B"]["X"]
+    -1.1
     """
     
     matrix = parse_csv_table(open(path))
     return _fill(matrix, ["X"], [("B", ("N", "D"))])
-
 
 if __name__ == "__main__":
     import doctest

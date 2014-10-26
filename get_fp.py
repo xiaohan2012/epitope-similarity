@@ -17,11 +17,14 @@ class Residue(object):
     """
     The residue class used for fingerprint generation
     """
-    abbrev_mapping = {"ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "ASX": "B", "CYS": "C", "GLN": "Q", "GLU": "E", "GLX": "Z", "GLY": "G", "HIS": "H", "ILE": "I", "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P", "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V"}
+    abbrev_mapping = {"ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "ASX": "B", "CYS": "C", "GLN": "Q", "GLU": "E", "GLX": "Z", "GLY": "G", "HIS": "H", "ILE": "I", "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P", "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V", "UNK": "X"}
     
-    hydro_dict = {'A':0.61,'C':1.07,'D':0.46,'E':0.47,'F':2.02,'G':0.07,'H':0.61,'I':2.22,'K':1.15,'L':1.53,'M':1.18,'N':0.06,'P':1.95,'Q':0.0,'R':0.6,'S':0.05,'T':0.05,'V':1.32,'W':2.65,'Y':1.88}
-    charged_dict={'A':-0.01,'C':0.12,'D':0.15,'E':0.07,'F':0.03,'G':0.0,'H':0.08,'I':-0.01,'K':0.0,'L':-0.01,'M':0.04,'N':0.06,'P':0.0,'Q':0.05,'R':0.04,'S':0.11,'T':0.04,'V':0.01,'W':0.0,'Y':0.03}
-    h_bond_dict={'A':0,'C':0,'D':1,'E':1,'F':0,'G':0,'H':1,'I':0,'K':2,'L':0,'M':0,'N':2,'P':0,'Q':2,'R':4,'S':1,'T':1,'V':0,'W':1,'Y':1}
+    hydro_dict = {'A':0.61,'C':1.07,'D':0.46,'E':0.47,'F':2.02,'G':0.07,'H':0.61,'I':2.22,'K':1.15,'L':1.53,'M':1.18,'N':0.06,'P':1.95,'Q':0.0,'R':0.6,'S':0.05,'T':0.05,'V':1.32,'W':2.65,'Y':1.88, 
+                  'X': 0.9974999999999999, 'B': 0.26, 'Z': 0.235, 'J': 1.875}
+    charged_dict={'A':-0.01,'C':0.12,'D':0.15,'E':0.07,'F':0.03,'G':0.0,'H':0.08,'I':-0.01,'K':0.0,'L':-0.01,'M':0.04,'N':0.06,'P':0.0,'Q':0.05,'R':0.04,'S':0.11,'T':0.04,'V':0.01,'W':0.0,'Y':0.03, 
+                  'X':0.04000000000000001, 'B': 0.105, 'Z': 0.06, 'J': -0.01}
+    h_bond_dict={'A':0,'C':0,'D':1,'E':1,'F':0,'G':0,'H':1,'I':0,'K':2,'L':0,'M':0,'N':2,'P':0,'Q':2,'R':4,'S':1,'T':1,'V':0,'W':1,'Y':1, 
+                 'X':0.85, 'B': 1.5, 'Z': 1.5, 'J': 0.0}
 
     def __init__(self, res, comp):
 
@@ -160,26 +163,28 @@ class Residue(object):
             self.turn_on_bit(offset + slice_count*2 + i , h_bond)
 
     def __repr__(self):            
-        return "ca atom index:%d" %(self.ca.index)
+        return "Residue#%d" %(self.get_id())
 
 
 class Complex(object):
-    def __init__(self , pdb_fp, epitope = []):
+    def __init__(self , pdb_st, epitope = []):
         """
-        pdb_fp: the pdb structure
-        epitope: the epitope residue number list
+        pdb_st: the pdb structure
+        epitope: list of int, the epitope residue number list, also they are the residues to be considered
         """
-        self.st = pdb_fp
+        self.st = pdb_st
 
         all_epitope = (True if len(epitope) == 0 else False)
 
         self.residues = []
             
-        for res in self.st.get_residues ():
+        for res in self.st.get_residues():
             res = Residue(res, self)
             # if res.is_valid () and (all_epitope or (len(epitope) != 0 and res.resnum in epitope)):
-            if res.is_valid () and (all_epitope or (len(epitope) != 0 and res.get_id () in epitope)): #if the res is valid and filter those residue in the epitope
+            if res.is_valid () and (all_epitope or (len(epitope) != 0 and res.get_id() in epitope)): #if the res is valid and filter those residue in the epitope
                 self.residues.append(res)
+
+        assert len(self.residues) > 0, "%s should have at least one residue" %(pdb_st.id)
 
     def get_residues (self):
         return self.residues
@@ -221,7 +226,6 @@ class Complex(object):
             
             res.set_fp_length (fp_size)#initialize the fingerprint
             
-            #print "residue %d" %i
             res.get_surrounding_fp(dist_step, dist_ind_min, dist_ind_max, offset = cylinder_slice_count)
             
             res.get_struct_fp(spin_image_radius_step, spin_image_height_step, 
@@ -229,7 +233,6 @@ class Complex(object):
                               spin_image_height_ind_min, spin_image_height_ind_max,
                               spin_image_radius_seg_cnt, spin_image_height_seg_cnt)
             
-            #print res.fp,len(res.fp)
             self.res_list.append(res)
         
         return self.res_list
@@ -269,7 +272,10 @@ if __name__ == "__main__":
     struct = p.get_structure(os.path.basename (path), path)
     c = Complex (struct, epitope)
     
-    c.get_fp (spin_image_radius_step = horizontal,
-              spin_image_height_step = vertical)
+    try:
+        c.get_fp (spin_image_radius_step = horizontal,
+                  spin_image_height_step = vertical)
+    except:
+        "Error"
     
     print c.fp2str ()

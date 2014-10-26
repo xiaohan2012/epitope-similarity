@@ -3,15 +3,18 @@ define the `similarity` of two chains
 """
 
 import re
-
-from collections import OrderedDict,defaultdict
-from UserDict import UserDict
 import math
-from numpy import corrcoef,array,vstack,zeros
+
+from UserDict import UserDict
+
+from collections import (OrderedDict, defaultdict)
+
+from numpy import (corrcoef, array,
+                   vstack, zeros)
 
 class residue_fp(object):
     """
-    The fingerprint for  residue
+    The fingerprint for residue
     """
     def __init__(self,fp_str,comp,residue_id):
         """
@@ -23,12 +26,12 @@ class residue_fp(object):
         self.fp_str = fp_str
         self.complex = comp
         self.residue_id = residue_id
-
+        
         self.res = filter (lambda r: r.get_id() == self.residue_id, self.complex.residues) [0] #search for the residue in the complex that has id = self.residue_id
 
-    def get_edit_dist_to(self,residue_fp1):
+    def corrcoef_to(self,residue_fp1):
         """
-        Measure the disntace of self.fp_str to the other finger print using the correlation coefficient
+        Measure the correlation coefficient of self.fp_str to the other finger print using the correlation coefficient
 
         Paramter: 
         residue_fp1: the other finger print
@@ -94,12 +97,23 @@ class residue_fp_list(UserDict):
         self.data = OrderedDict()#the place to store the fingerprints
         
         from StringIO import StringIO
-        for line in StringIO (fp_string).readlines():
+        for line in StringIO(fp_string).readlines():
             s_line = re.split(r"[ ,\t]",line) 
             residue_id,fp = int(s_line[0]), map(float, s_line[1:])
-            
             self.data[residue_id] = residue_fp(fp, self.comp, residue_id)
+        
+    def get_res_fp(self, res_id = None):
+        """
+        Param:
+        -----
+        id(optional): int, the residue id
 
+        Return:
+        -------
+        residue_fp instance
+        """
+        assert res_id is not None, "res_id should not be None"
+        return self.data[res_id]
 
 class dist_mat(UserDict):
     """
@@ -119,7 +133,7 @@ class dist_mat(UserDict):
         
         for res1, fp1 in self.fp1.items():
             for res2, fp2 in self.fp2.items():
-                self.data[res1][res2] = fp1.get_edit_dist_to(fp2)
+                self.data[res1][res2] = fp1.corrcoef_to(fp2)
 
         self.clustered_fp1_res = set()
         self.clustered_fp2_res = set()
@@ -130,11 +144,15 @@ class dist_mat(UserDict):
         find the closest residue pairs in terms of their fingerprint distance meanwhile ignoring those already in the clusters or cosidered not suitable
         
         Return: 
-        the residue pair with the **maximum** fingerprint similarity with their similarity score
+        The residue pair with the MAXIMUM fingerprint similarity with their similarity score
         """
         from itertools import chain
         
-        all_pairs = list(chain.from_iterable(map(lambda (row, cols): map (lambda (col, val): (row, col, val), cols.items ()), self.data.items ())))#from defaultdict(<type 'dict'>, {res1: {res2: 3, res3: 3}, res2: {res4: 6}}) to [(res1, res2, 3), (res1, res3, 3), (res2, res4, 6)]
+        all_pairs = list(chain.from_iterable(map(lambda (row, cols): 
+                                                 map (lambda (col, val): 
+                                                      (row, col, val), 
+                                                      cols.items ()), 
+                                                 self.data.items ())))#from defaultdict(<type 'dict'>, {res1: {res2: 3, res3: 3}, res2: {res4: 6}}) to [(res1, res2, 3), (res1, res3, 3), (res2, res4, 6)]
         
         tuples = filter(lambda tpl: 
                         tpl not in self.not_suitable_tuple and 
@@ -148,6 +166,20 @@ class dist_mat(UserDict):
             return max (tuples, key = lambda (_,__,num): num)
 
 
+    def set_clusters(self, residue_id_pairs):
+        """If we know the pairs, we can set it so that the searching process can be skipped"""
+        cluster = []
+        for id1, id2 in residue_id_pairs:
+            res_fp1 = self.fp1.data[id1]
+            res_fp2 = self.fp2.data[id2]
+            
+            triple = (res_fp1.residue_id, 
+                      res_fp2.residue_id, 
+                      res_fp1.corrcoef_to(res_fp2))
+            cluster.append(triple)
+            
+        self.clusters.append(cluster)
+            
     def find_clusters(self, cutoff):
         def helper():
             """
@@ -199,7 +231,7 @@ class dist_mat(UserDict):
             pass
         return self.clusters
         
-res_sim_mat = {"AA" : 1,"AC" : 0,"AD" : 0,"AE" : 0,"AF" : 0,"AG" : 0,"AH" : 0,"AI" : 0,"AK" : 0,"AL" : 0,"AM" : 0,"AN" : -2,"AP" : -1,"AQ" : -1,"AR" : -1,"AS" : 1,"AT" : 0,"AV" : 0,"AW" : -3,"AY" : -2,"CC" : 9,"CD" : -3,"CE" : -4,"CF" : -2,"CG" : -3,"CH" : -3,"CI" : -1,"CK" : -3,"CL" : -1,"CM" : -1,"CN" : -3,"CP" : -3,"CQ" : -3,"CR" : -3,"CS" : -1,"CT" : -1,"CV" : -1,"CW" : -2,"CY" : -2,"DD" : 6,"DE" : 2,"DF" : -3,"DG" : -1,"DH" : -1,"DI" : -3,"DK" : -1,"DL" : -4,"DM" : -3,"DN" : 1,"DP" : -1,"DQ" : 0,"DR" : -2,"DS" : 0,"DT" : -1,"DV" : -3,"DW" : -4,"DY" : -3,"EE" : 5,"EF" : -3,"EG" : -2,"EH" : 0,"EI" : -3,"EK" : 1,"EL" : -3,"EM" : -2,"EN" : 0,"EP" : -1,"EQ" : 2,"ER" : 0,"ES" : 0,"ET" : -1,"EV" : -2,"EW" : -3,"EY" : -2,"FF" : 6,"FG" : -3,"FH" : -1,"FI" : 0,"FK" : -3,"FL" : 0,"FM" : 0,"FN" : -3,"FP" : -4,"FQ" : -3,"FR" : -3,"FS" : -2,"FT" : -2,"FV" : -1,"FW" : 1,"FY" : 3,"GG" : 6,"GH" : -2,"GI" : -4,"GK" : -2,"GL" : -4,"GM" : -3,"GN" : 0,"GP" : -2,"GQ" : -2,"GR" : -2,"GS" : 0,"GT" : -2,"GV" : -3,"GW" : -2,"GY" : -3,"HH" : 8,"HI" : -3,"HK" : -1,"HL" : -3,"HM" : -2,"HN" : 1,"HP" : -2,"HQ" : 0,"HR" : 0,"HS" : -1,"HT" : -2,"HV" : -3,"HW" : -2,"HY" : 2,"II" : 4,"IK" : -3,"IL" : 2,"IM" : 1,"IN" : -3,"IP" : -3,"IQ" : -3,"IR" : -3,"IS" : -2,"IT" : -1,"IV" : 3,"IW" : -3,"IY" : -1,"KK" : 5,"KL" : -2,"KM" : -1,"KN" : 0,"KP" : -1,"KQ" : 1,"KR" : 2,"KS" : 0,"KT" : -1,"KV" : -2,"KW" : -3,"KY" : -2,"LL" : 4,"LM" : 2,"LN" : -3,"LP" : -3,"LQ" : -2,"LR" : -2,"LS" : -2,"LT" : -1,"LV" : 1,"LW" : -2,"LY" : -1,"MM" : 5,"MN" : -2,"MP" : -2,"MQ" : 0,"MR" : -1,"MS" : -1,"MT" : -1,"MV" : 1,"MW" : -1,"MY" : -1,"NN" : 6,"NP" : -2,"NQ" : 0,"NR" : 0,"NS" : 1,"NT" : 0,"NV" : -3,"NW" : -4,"NY" : -2,"PP" : 7,"PQ" : -1,"PR" : -2,"PS" : -1,"PT" : -1,"PV" : -2,"PW" : -4,"PY" : -3,"QQ" : 5,"QR" : 1,"QS" : 0,"QT" : -1,"QV" : -2,"QW" : -2,"QY" : -1,"RR" : 5,"RS" : -1,"RT" : -1,"RV" : -3,"RW" : -3,"RY" : -2,"SS" : 4,"ST" : 1,"SV" : -2,"SW" : -3,"SY" : -2,"TT" : 5,"TV" : 0,"TW" : -2,"TY" : -2,"VV" : 4,"VW" : -3,"VY" : -1,"WW" : 11,"WY" : 2,"YY" : 7}
+# res_sim_mat = {"AA" : 1,"AC" : 0,"AD" : 0,"AE" : 0,"AF" : 0,"AG" : 0,"AH" : 0,"AI" : 0,"AK" : 0,"AL" : 0,"AM" : 0,"AN" : -2,"AP" : -1,"AQ" : -1,"AR" : -1,"AS" : 1,"AT" : 0,"AV" : 0,"AW" : -3,"AY" : -2,"CC" : 9,"CD" : -3,"CE" : -4,"CF" : -2,"CG" : -3,"CH" : -3,"CI" : -1,"CK" : -3,"CL" : -1,"CM" : -1,"CN" : -3,"CP" : -3,"CQ" : -3,"CR" : -3,"CS" : -1,"CT" : -1,"CV" : -1,"CW" : -2,"CY" : -2,"DD" : 6,"DE" : 2,"DF" : -3,"DG" : -1,"DH" : -1,"DI" : -3,"DK" : -1,"DL" : -4,"DM" : -3,"DN" : 1,"DP" : -1,"DQ" : 0,"DR" : -2,"DS" : 0,"DT" : -1,"DV" : -3,"DW" : -4,"DY" : -3,"EE" : 5,"EF" : -3,"EG" : -2,"EH" : 0,"EI" : -3,"EK" : 1,"EL" : -3,"EM" : -2,"EN" : 0,"EP" : -1,"EQ" : 2,"ER" : 0,"ES" : 0,"ET" : -1,"EV" : -2,"EW" : -3,"EY" : -2,"FF" : 6,"FG" : -3,"FH" : -1,"FI" : 0,"FK" : -3,"FL" : 0,"FM" : 0,"FN" : -3,"FP" : -4,"FQ" : -3,"FR" : -3,"FS" : -2,"FT" : -2,"FV" : -1,"FW" : 1,"FY" : 3,"GG" : 6,"GH" : -2,"GI" : -4,"GK" : -2,"GL" : -4,"GM" : -3,"GN" : 0,"GP" : -2,"GQ" : -2,"GR" : -2,"GS" : 0,"GT" : -2,"GV" : -3,"GW" : -2,"GY" : -3,"HH" : 8,"HI" : -3,"HK" : -1,"HL" : -3,"HM" : -2,"HN" : 1,"HP" : -2,"HQ" : 0,"HR" : 0,"HS" : -1,"HT" : -2,"HV" : -3,"HW" : -2,"HY" : 2,"II" : 4,"IK" : -3,"IL" : 2,"IM" : 1,"IN" : -3,"IP" : -3,"IQ" : -3,"IR" : -3,"IS" : -2,"IT" : -1,"IV" : 3,"IW" : -3,"IY" : -1,"KK" : 5,"KL" : -2,"KM" : -1,"KN" : 0,"KP" : -1,"KQ" : 1,"KR" : 2,"KS" : 0,"KT" : -1,"KV" : -2,"KW" : -3,"KY" : -2,"LL" : 4,"LM" : 2,"LN" : -3,"LP" : -3,"LQ" : -2,"LR" : -2,"LS" : -2,"LT" : -1,"LV" : 1,"LW" : -2,"LY" : -1,"MM" : 5,"MN" : -2,"MP" : -2,"MQ" : 0,"MR" : -1,"MS" : -1,"MT" : -1,"MV" : 1,"MW" : -1,"MY" : -1,"NN" : 6,"NP" : -2,"NQ" : 0,"NR" : 0,"NS" : 1,"NT" : 0,"NV" : -3,"NW" : -4,"NY" : -2,"PP" : 7,"PQ" : -1,"PR" : -2,"PS" : -1,"PT" : -1,"PV" : -2,"PW" : -4,"PY" : -3,"QQ" : 5,"QR" : 1,"QS" : 0,"QT" : -1,"QV" : -2,"QW" : -2,"QY" : -1,"RR" : 5,"RS" : -1,"RT" : -1,"RV" : -3,"RW" : -3,"RY" : -2,"SS" : 4,"ST" : 1,"SV" : -2,"SW" : -3,"SY" : -2,"TT" : 5,"TV" : 0,"TW" : -2,"TY" : -2,"VV" : 4,"VW" : -3,"VY" : -1,"WW" : 11,"WY" : 2,"YY" : 7}
 
 class FPWithComplex(object):
     """
@@ -214,7 +246,10 @@ class FPWithComplex(object):
         self.complex = complex #reads the structure
         self.fp = residue_fp_list(fp_string, complex) #instantiates the fp list
     
-def similarity_between(c1,c2, cutoff = 20):
+def similarity_between(c1, c2, 
+                       residue_similarity_matrix, 
+                       cutoff = 20, 
+                       residue_id_pairs = None):
     """
     Parameter: 
     c1: complex fingerprint 1
@@ -225,31 +260,27 @@ def similarity_between(c1,c2, cutoff = 20):
     """
     #print "generating distance matrix"
     pair = dist_mat(c1,c2)
+    if residue_id_pairs:
+        pair.set_clusters(residue_id_pairs)
+        clusters = pair.clusters
+    else:
+        clusters = pair.find_clusters(cutoff)
     
-    #print "finding clusters"
-    clusters = pair.find_clusters(cutoff)
-    
-    #val1, val2 and val3 starts
     val1,val2,val3 = 0, 0, 0
 
-    #print "calculating value1"
     for c in clusters:
         for t in c:
             val1 += t[2] * 10#the edit distance
+
+    for c in clusters:
+        val2 += len(c)#pair count
     
-    #print "calculating value2"
     for c in clusters:
         for t in c:
             res1,res2,dist = t
             res1_code = pair.fp1[res1].res.get_resname_abbrev()
             res2_code = pair.fp2[res2].res.get_resname_abbrev()
-            try:
-                val2 += res_sim_mat[res1_code + res2_code]
-            except KeyError:
-                val2 += res_sim_mat[res2_code + res1_code ]
-
-    #print "calculating value3"
-    for c in clusters:
-        val3 += len(c)#pair count
+            
+            val3 += residue_similarity_matrix[res1_code][res2_code]
 
     return val1 , val2 , val3
