@@ -21,10 +21,10 @@ class Residue(object):
     
     hydro_dict = {'A':0.61,'C':1.07,'D':0.46,'E':0.47,'F':2.02,'G':0.07,'H':0.61,'I':2.22,'K':1.15,'L':1.53,'M':1.18,'N':0.06,'P':1.95,'Q':0.0,'R':0.6,'S':0.05,'T':0.05,'V':1.32,'W':2.65,'Y':1.88, 
                   'X': 0.9974999999999999, 'B': 0.26, 'Z': 0.235, 'J': 1.875}
-    charged_dict={'A':-0.01,'C':0.12,'D':0.15,'E':0.07,'F':0.03,'G':0.0,'H':0.08,'I':-0.01,'K':0.0,'L':-0.01,'M':0.04,'N':0.06,'P':0.0,'Q':0.05,'R':0.04,'S':0.11,'T':0.04,'V':0.01,'W':0.0,'Y':0.03, 
-                  'X':0.04000000000000001, 'B': 0.105, 'Z': 0.06, 'J': -0.01}
-    h_bond_dict={'A':0,'C':0,'D':1,'E':1,'F':0,'G':0,'H':1,'I':0,'K':2,'L':0,'M':0,'N':2,'P':0,'Q':2,'R':4,'S':1,'T':1,'V':0,'W':1,'Y':1, 
-                 'X':0.85, 'B': 1.5, 'Z': 1.5, 'J': 0.0}
+    charged_dict = {'A':-0.01,'C':0.12,'D':0.15,'E':0.07,'F':0.03,'G':0.0,'H':0.08,'I':-0.01,'K':0.0,'L':-0.01,'M':0.04,'N':0.06,'P':0.0,'Q':0.05,'R':0.04,'S':0.11,'T':0.04,'V':0.01,'W':0.0,'Y':0.03, 
+                    'X':0.04000000000000001, 'B': 0.105, 'Z': 0.06, 'J': -0.01}
+    h_bond_dict = {'A':0,'C':0,'D':1,'E':1,'F':0,'G':0,'H':1,'I':0,'K':2,'L':0,'M':0,'N':2,'P':0,'Q':2,'R':4,'S':1,'T':1,'V':0,'W':1,'Y':1, 
+                   'X':0.85, 'B': 1.5, 'Z': 1.5, 'J': 0.0}
 
     def __init__(self, res, comp):
 
@@ -32,19 +32,22 @@ class Residue(object):
         self.fp = None #to be assigned later
         self.ca = None
         self.body = res
-        self.resnum = res.get_id ()
-        
+        self.resnum = res.get_id()
+        if isinstance(self.resnum, tuple):
+            self.resnum = self.resnum[1]
+        assert type(self.resnum) == int,  "resnum should be integer but is '%r' of value '%r'" %(type(self.resnum), self.resnum)
+
         for a in res: #iterate over the atoms in the residue
             if a.get_name () == 'CA':
                 self.ca = a
                 break
             
         if self.ca is None:
-            warnings.warn ("resnum %d has no CA atom" %res.get_id ())
+            sys.stderr.write("resnum %d has no CA atom\n" %self.resnum)
             
     def get_id (self):
         """ residue id"""
-        return self.body.get_id () [1]
+        return self.body.get_id() [1]
 
     def get_list (self):
         """
@@ -175,13 +178,13 @@ class Complex(object):
         self.st = pdb_st
 
         all_epitope = (True if len(epitope) == 0 else False)
-
+        
         self.residues = []
             
         for res in self.st.get_residues():
             res = Residue(res, self)
             # if res.is_valid () and (all_epitope or (len(epitope) != 0 and res.resnum in epitope)):
-            if res.is_valid () and (all_epitope or (len(epitope) != 0 and res.get_id() in epitope)): #if the res is valid and filter those residue in the epitope
+            if res.is_valid() and (all_epitope or res.get_id() in epitope): #if the res is valid and filter those residue in the epitope
                 self.residues.append(res)
 
         assert len(self.residues) > 0, "%s should have at least one residue" %(pdb_st.id)

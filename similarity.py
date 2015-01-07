@@ -39,7 +39,8 @@ class residue_fp(object):
         Return:
         The distance, float
         """
-        return corrcoef(vstack((self.fp_str,residue_fp1.fp_str)))[0,1]
+        result = corrcoef(vstack((self.fp_str,residue_fp1.fp_str)))[0,1]
+        return 0 if math.isnan(result) else result
 
     def within_range_of(self, o_res, range_dist):
         """
@@ -134,7 +135,7 @@ class dist_mat(UserDict):
         for res1, fp1 in self.fp1.items():
             for res2, fp2 in self.fp2.items():
                 self.data[res1][res2] = fp1.corrcoef_to(fp2)
-
+                
         self.clustered_fp1_res = set()
         self.clustered_fp2_res = set()
         self.clusters = []
@@ -153,7 +154,6 @@ class dist_mat(UserDict):
                                                       (row, col, val), 
                                                       cols.items ()), 
                                                  self.data.items ())))#from defaultdict(<type 'dict'>, {res1: {res2: 3, res3: 3}, res2: {res4: 6}}) to [(res1, res2, 3), (res1, res3, 3), (res2, res4, 6)]
-        
         tuples = filter(lambda tpl: 
                         tpl not in self.not_suitable_tuple and 
                         tpl [0] not in self.clustered_fp1_res and 
@@ -261,6 +261,14 @@ def similarity_between(c1, c2,
     #print "generating distance matrix"
     pair = dist_mat(c1,c2)
     if residue_id_pairs:
+        # checking that residue_id_pairs is valid
+        # residue ids should exist in complex1 and complex2
+        subset1, set1 = set([id1 for id1,_ in residue_id_pairs]), set(pair.fp1.data.keys())
+        subset2, set2 = set([id2 for id2,_ in residue_id_pairs]), set(pair.fp2.data.keys())
+        
+        assert subset1.issubset(set1), "%r is not subset of %r" %(subset1, set1)
+        assert subset2.issubset(set2), "%r is not subset of %r" %(subset2, set2)
+
         pair.set_clusters(residue_id_pairs)
         clusters = pair.clusters
     else:
